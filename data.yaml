@@ -1,0 +1,22 @@
+names:
+- '0'
+- Bell_Pepper_Bacterial_Spot
+- Black_rot
+- Esca
+- Grape_leaf_Blight
+- Healthy_Bell_Pepper
+- Healthy_Corn_Leaf
+- Healthy_Grape_Leaf
+- Healthy_Potato_Leaf
+- Potato_Early_Blight
+- Potato_Late_Blight
+nc: 11
+roboflow:
+  license: CC BY 4.0
+  project: disease-detection-l9wbv-tkoik
+  url: https://universe.roboflow.com/pest-detection-wxgup/disease-detection-l9wbv-tkoik/dataset/1
+  version: 1
+  workspace: pest-detection-wxgup
+test: ../test/images
+train: ../train/images
+val: ../valid/images

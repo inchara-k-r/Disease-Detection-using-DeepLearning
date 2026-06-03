@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Pi-Drone Ground Control System</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <style>
+        body {
+            background: #f0fdfa;
+            color: #1a202c;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            margin: 0;
+        }
+        .container {
+            padding: 24px;
+            max-width: 1600px;
+            margin: auto;
+        }
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            padding-bottom: 18px;
+            border-bottom: 2px solid #88f3c0;
+            margin-bottom: 20px;
+        }
+        .status-bar h1 {
+            color: #22223b;
+            font-size: 2.4rem;
+            font-weight: 700;
+            margin: 0;
+        }
+        .status-bar .connection {
+            color: #19bc80;
+            font-weight: bold;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+        }
+        .dashboard {
+            display: grid;
+            grid-template-columns: 2.5fr 1fr;
+            gap: 20px;
+        }
+        .panel, .panel-dark {
+            background: #23293a;
+            border-radius: 12px;
+            box-shadow: 0 4px 24px #0003;
+            padding: 16px 22px;
+        }
+        .panel {
+            background: #f6fff9;
+        }
+        .panel-dark {
+            background: #262f43;
+            color: #d9e1ee;
+        }
+        .large-panel {
+            min-height: 430px;
+            display: flex;
+            flex-direction: column;
+        }
+        .video-area {
+            background: #212436;
+            border-radius: 11px;
+            height: 350px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+        .video-area video, .video-area img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            background: #23293a;
+            border-radius: 11px;
+        }
+        .video-overlay {
+            position: absolute;
+            top: 10px;
+            left: 12px;
+            background: rgba(16,24,37,0.63);
+            color: #b8eedb;
+            padding: 6px 13px;
+            border-radius: 6px;
+            font-size: 0.92em;
+            font-family: monospace;
+        }
+        .section-title {
+            font-size: 1.25em;
+            font-weight: bold;
+            color: #bef2de;
+            margin-bottom: 5px;
+        }
+        .panel-controls button {
+            margin-bottom: 10px;
+            margin-right: 8px;
+            font-size: 1em;
+            padding: 12px 18px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            color: #fff;
+            cursor: pointer;
+            transition: 0.15s;
+            outline: none;
+        }
+        .panel-controls .arm { background: #16c872; }
+        .panel-controls .disarm { background: #e23e3e; }
+        .panel-controls .takeoff { background: #3589e3; width: 73%; margin:12px 0 0 0;}
+        .panel-controls .land { background: #f8c748; color:#231c1c; width: 73%;}
+        .manual-move {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 24px;
+        }
+        .manual-move .dpad-row {
+            display: flex; 
+            gap: 23px;
+            margin-bottom: 9px;
+        }
+        .manual-move button {
+            background: #2a354d;
+            border: 2px solid #444a58;
+            color: #bef2de;
+            border-radius: 8px;
+            font-size: 1.3em;
+            width: 38px; 
+            height: 38px;
+            cursor: pointer;
+            transition: background 0.13s;
+        }
+        .manual-move button:hover {
+            background: #4defa5;
+            color: #233945;
+        }
+        .console-log {
+            background: #1c2230;
+            color: #66ffba;
+            font-family: monospace;
+            font-size: 1em;
+            padding: 13px 10px;
+            border-radius: 8px;
+            height: 110px;
+            overflow-y: auto;
+        }
+        .dashboard .panel-controls {margin-bottom:22px;}
+        .inference-row {
+            display: flex;
+            background:#20293e;
+            border-radius: 8px;
+            padding: 10px 0;
+            margin: 0 -5px;
+        }
+        .inference-col {
+            flex: 1;
+            text-align: center;
+            color: #bef2de;
+            font-weight: 400;
+            border-right: 1px solid #36405b;
+        }
+        .inference-col:last-child { border-right: none; }
+        .inference-title { font-size:0.93em; color: #a0eaed; }
+        .inference-val { font-size:1.18em; font-weight: bold; margin-top: 3px;}
+        @media (max-width:1100px) {
+            .dashboard { grid-template-columns: 1fr; }
+            .large-panel, .panel-dark { margin-bottom: 18px;}
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="status-bar">
+            <h1>Pi-Drone Ground Control System</h1>
+            <div class="connection">Status: <span style="color:#00e160;margin-left:6px;">CONNECTED</span></div>
+        </div>
+        <div class="dashboard">
+            <div>
+                <!-- Live Camera Video Panel -->
+                <div class="panel-dark large-panel">
+                    <div class="section-title">Live Pi Camera Feed (Webcam view 1280x720)</div>
+                    <div class="video-area">
+                        <video id="webcam" width="1280" height="720" autoplay playsinline muted></video>
+                        <div class="video-overlay">
+                            ALT: <span id="telemetry-alt">0.0</span> m<br>
+                            HDG: <span id="telemetry-hdg">000</span>°<br>
+                            BAT: <span id="telemetry-bat">100</span>%
+                        </div>
+                    </div>
+                </div>
+                <!-- Deep Learning Inference Mock Panel -->
+                <div class="panel-dark" style="margin-top:15px;">
+    <div class="section-title">Deep Learning Inference</div>
+    <div class="inference-row">
+        <div class="inference-col">
+            <div class="inference-title">Plant Health</div>
+            <div class="inference-val" id="dl-health">Healthy</div>
+        </div>
+        <div class="inference-col">
+            <div class="inference-title">% Affected</div>
+            <div class="inference-val" id="dl-percent">0.0%</div>
+        </div>
+        <div class="inference-col">
+            <div class="inference-title">Spraying Amount (ml)</div>
+            <div class="inference-val" id="dl-spray">0 ml</div>
+        </div>
+    </div>
+    <div style="color: #7bd3e5; font-size:0.81em; margin-top:8px;">
+        *Spray amount is based on plant health & percentage affected, generated for demo purposes.
+    </div>
+</div>
+
+            </div>
+            <div>
+                <!-- Flight Control Panel -->
+                <div class="panel">
+                    <div class="section-title">Flight Control Panel</div>
+                    <div class="panel-controls">
+                        <button class="arm">ARM</button>
+                        <button class="disarm">DISARM</button>
+                        <br>
+                        <button class="takeoff">TAKEOFF</button>
+                        <br>
+                        <button class="land">LAND / RTL</button>
+                    </div>
+                    <div style="margin:17px 0 6px 0;text-align:center;color:#23293a;font-weight:bold;">
+                        Manual Movement
+                    </div>
+                    <div class="manual-move">
+                        <div class="dpad-row">
+                            <button title="Forward">&#8593;</button>
+                        </div>
+                        <div class="dpad-row">
+                            <button title="Left">&#8592;</button>
+                            <div style="width:36px;"></div>
+                            <button title="Right">&#8594;</button>
+                        </div>
+                        <div class="dpad-row">
+                            <button title="Back">&#8595;</button>
+                        </div>
+                    </div>
+                </div>
+                <!-- Console Log -->
+                <div class="panel-dark" style="margin-top:16px;">
+                    <div class="section-title">Console Log</div>
+                    <div class="console-log" id="console-log">
+                        &gt; Initializing GCS...<br>
+                        &gt; Waiting for Raspberry Pi connection...<br>
+                        &gt; [01:03 AM] Attempting to connect to Raspberry Pi server...<br>
+                        &gt; [01:03 AM] <span style="color:#e7de5b;">Connection established! Ready to fly.</span><br>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- After all your panel/dashboard divs, right before closing container -->
+<div class="panel" style="margin-top: 32px;">
+    <h2 style="text-align:center;color:#19bc80;font-weight:600;">🌿 Plant Health & Pesticide Spray Calculator</h2>
+    <table style="width:100%;border-collapse:collapse;background:#e9fff2;border-radius:10px;overflow:hidden;">
+        <thead>
+            <tr style="background:#c7f9e5;">
+                <th style="padding:16px;font-size:1.18em;">Plant ID</th>
+                <th style="padding:16px;font-size:1.18em;">Affected %</th>
+                <th style="padding:16px;font-size:1.18em;">Spray Amount (ml)</th>
+            </tr>
+        </thead>
+        <tbody id="plant-table" style="text-align:center;font-size:1.09em;color:#22223b;">
+            <!-- JS fills rows here -->
+        </tbody>
+    </table>
+    <div style="margin-top:18px;text-align:center;font-size:1em;color:#198754;">
+        Powered by Deep Learning • Bengaluru, India
+    </div>
+</div>
+
+
+    <!-- JavaScript to show your own web cam -->
+    <script>
+        // Show webcam video
+       // let video = document.getElementById('webcam');
+        //navigator.mediaDevices.getUserMedia({ video: { width: 1280, height: 720 } })
+          //  .then(stream => { video.srcObject = stream; })
+            //.catch(error => {
+              //  video.parentElement.innerHTML = '<div style="color:#e87474;font-size:2em;margin-top:110px;">Webcam not found or permission denied.</div>';
+            //});
+
+        // Simulate changing telemetry and inference data
+        setInterval(() => {
+            document.getElementById('telemetry-alt').textContent = (Math.random() * 20).toFixed(2);
+            document.getElementById('telemetry-hdg').textContent = String(Math.floor(Math.random()*360)).padStart(3, '0');
+            document.getElementById('telemetry-bat').textContent = (Math.max(0, 100 - Math.random() * 3)).toFixed(1);
+
+            // Randomly simulate detection output
+            const objects = ["No Target", "Person", "Vehicle", "Tree", "Obstacle"];
+            const idx = Math.floor(Math.random() * objects.length);
+            document.getElementById('dl-object').textContent = objects[idx];
+            document.getElementById('dl-confidence').textContent = (Math.random()*100).toFixed(1) + "%";
+            document.getElementById('dl-latency').textContent = Math.floor(Math.random()*40+50) + " ms";
+        }, 2000);
+    </script>
+    <script>
+function calculateSpray(affected) {
+    if (affected <= 10)
+        return 0;
+    else if (affected <= 25)
+        return 2;
+    else if (affected <= 40)
+        return 5;
+    else if (affected <= 60)
+        return 6;
+    else if (affected <= 80)
+        return 8;
+    else
+        return 10;
+}
+
+function populatePlantTable() {
+    fetch('http://localhost:5000/plant_data')
+        .then(res => res.json())
+        .then(data => {
+            let html = "";
+            data.forEach(plant => {
+                const spray = calculateSpray(plant.affected);
+                html += `<tr>
+                    <td style="padding:13px 7px;font-weight:550;">${plant.id}</td>
+                    <td style="padding:13px 7px;">${plant.affected}%</td>
+                    <td style="padding:13px 7px;">${spray.toFixed(2)}</td>
+                </tr>`;
+            });
+            document.getElementById('plant-table').innerHTML = html;
+        });
+}
+populatePlantTable();
+setInterval(populatePlantTable, 10000);
+</script>
+</body>
+
+</body>
+</html>
