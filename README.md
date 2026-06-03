@@ -62,36 +62,8 @@ Precision Spray Activation
 ↓
 Monitoring Dashboard
 
----
+-----
 
-## Folder Structure
-
-Chip-To-Crop/
-├── backend/
-├── frontend/
-├── dataset/
-├── models/
-├── presentation/
-├── README.md
-└── requirements.txt
-
----
-
-## Installation
-
-1. Clone the repository
-
-git clone https://github.com/yourusername/Chip-To-Crop.git
-
-2. Install dependencies
-
-pip install -r requirements.txt
-
-3. Run application
-
-python backend/app.py
-
----
 
 ## Future Improvements
 
@@ -101,7 +73,7 @@ python backend/app.py
 * Cloud dashboard
 * Multi-crop disease support
 
----
+-----
 
 ## Team
 
